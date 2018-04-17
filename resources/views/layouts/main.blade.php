@@ -10,7 +10,7 @@
 	<meta property="og:image:height" content="50" />
 	<meta charset="UTF-8">
 	<title>TeamUp Soccer @yield('title')</title>
-	
+
 <!-- Latest compiled and minified JavaScript -->
 
 	<link rel="icon" href="favicon.ico" type="image/x-icon">
@@ -21,7 +21,7 @@
 
 </head>
 <body>
-
+<div id="app">
 @include('layouts.topMenu')
 
 <div id="pagemiddle">
@@ -34,6 +34,6 @@
 @include ('layouts.sidebar')
 
 </div>
-
+</div>
 </body>
 </html>

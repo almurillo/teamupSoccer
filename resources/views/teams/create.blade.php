@@ -23,9 +23,10 @@
 						{{ csrf_field() }}
 
 						<div class="form-group">
+              <h1>@{{ teamName }}</h1>
 							<label for="name">Team Name:</label>
 							<input type="text" id="name" name="name" {{-- onBlur="checkGname()" --}} class="form-control" v-model="teamName">
-              <span>@{{ teamName }}</span>
+
             </div>
 
 						<div class="form-group">
