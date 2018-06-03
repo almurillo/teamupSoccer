@@ -23,7 +23,6 @@
 						{{ csrf_field() }}
 
 						<div class="form-group">
-              <h1>@{{ teamName }}</h1>
 							<label for="name">Team Name:</label>
 							<input type="text" id="name" name="name" {{-- onBlur="checkGname()" --}} class="form-control" v-model="teamName">
 
@@ -51,6 +50,8 @@
 								<option value="{{ $state->state_code }}">{{ $state->state_code }}</option>
 
 							@endforeach
+              <geo-select></geo-select>
+
 							</select>
 						</div>
 
@@ -113,6 +114,7 @@
  	}
 
   });
+  Vue.component('geo-select', require('RELATIVE_PATH_TO/vendor/igaster/laravel_cities/src/vue/geo-select.vue'));
   var app = new Vue({
   el: '#app',
   data: {

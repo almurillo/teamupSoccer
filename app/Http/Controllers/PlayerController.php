@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Player;
 use App\Member;
 
+use Carbon\Carbon;
+
 class PlayerController extends Controller
 {
 
@@ -17,7 +19,7 @@ class PlayerController extends Controller
      */
     public function store($team_id, $game_id)
     {
-        
+
        $user_id = auth()->id();
        $count = Player::where(['team_id' => $team_id, 'user_id' => $user_id, 'game_id' => $game_id])->count();
 
@@ -28,7 +30,7 @@ class PlayerController extends Controller
 
         return back()->withErrors('You are already going to this team\'s game');
 
-       } else if ($member->approved == 0 || $memberCount == 0){
+      } else if (@$member->approved == 0 || $memberCount == 0){
 
         return back()->withErrors('You need to be part of the Team or approve to join the game.');
 
@@ -53,9 +55,17 @@ class PlayerController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show($game_id)
     {
-        //
+      $players = Player::join('users','players.user_id','=','users.id')
+      ->join('games','players.game_id','=','games.id')
+      ->whereDate('games.game_time','>=', Carbon::today()->toDateString())
+      ->where('games.id','=',$game_id)
+      ->get();
+
+      // dd($players);
+
+     return view('players.show', compact('players'));
     }
 
     /**
@@ -87,8 +97,8 @@ class PlayerController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy($team_id,$game_id,$user_id)
     {
-        //
+      Player::where(['team_id'=>$team_id,'game_id'=>$game_id,'user_id'=>$user_id])->detach();
     }
 }

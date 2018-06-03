@@ -55,7 +55,6 @@ Route::resource('teams/{team}/games', 'GameController', ['except' => ['index','s
 
 Route::resource('teams/{team}/games/{game}/player', 'PlayerController', ['only' => ['store','destroy']]);
 
+Route::resource('players', 'PlayerController', ['only' => ['show']]);
+
 Route::get('api/get-city-list','APIController@getCityList');
-
-
-

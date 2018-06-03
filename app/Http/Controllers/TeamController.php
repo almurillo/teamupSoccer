@@ -7,6 +7,7 @@ use App\Post;
 use App\User;
 use App\Member;
 use App\Game;
+use App\Player;
 use Illuminate\Http\Request;
 use DB;
 use Image;
@@ -45,7 +46,7 @@ class TeamController extends Controller
     {
 
         $states = DB::table('states')->get();
-        
+
         return view('teams.create',compact('states'));
 
     }
@@ -58,7 +59,7 @@ class TeamController extends Controller
      */
     public function store(Request $request)
     {
-        
+
         $this->validate(request(), [
 
             'name' => 'required|min:2|unique:teams,name',
@@ -122,11 +123,14 @@ class TeamController extends Controller
      * @param  \App\Team  $team
      * @return \Illuminate\Http\Response
      */
-    public function show(Team $team)
+    public function show(Team $team, Game $game)
     {
 
-        $member = Member::where(['user_id' => auth()->id(), 'team_id' => $team->id])->first();
-
+        $member = Member::where(['user_id' => auth()->id(), 'team_id' => $team->id])
+        ->first();
+        if($member == null){
+          $member = [];
+        }
         $user = User::where('id','=',$team->user_id)->first();
 
         $approves = Member::join('users','users.id', '=', 'members.user_id')
@@ -138,8 +142,10 @@ class TeamController extends Controller
         ->whereDate('game_time','>=', Carbon::today()->toDateString())
         ->orderBy('game_time', 'ASC')
         ->get();
-        
-        return view('teams.show', compact('team','user','member','approves','games'));
+
+        // dd($member);
+
+        return view('teams.show', compact('team','user','member','approves','games','count'));
 
     }
 
@@ -155,14 +161,14 @@ class TeamController extends Controller
     if(Auth::user()->id == $team->user_id){
 
         $states = DB::table('states')->get();
-        
+
         return view('teams.edit', compact('team','states'));
 
     }else{
 
         return back();
 
-    }
+      }
 
     }
 
@@ -178,7 +184,7 @@ class TeamController extends Controller
 
         $team = Team::find($id);
         // dd($team->id);
-        
+
         $this->validate(request(), [
 
             'name' => "required|min:2|unique:teams,name,$id",
@@ -192,7 +198,7 @@ class TeamController extends Controller
             'team_avatar' => 'sometimes|image'
 
             ]);
-        
+
         $team = Team::find($id);
 
         $team->name = $request->name;
@@ -232,7 +238,7 @@ class TeamController extends Controller
      */
     public function destroy(Team $team)
     {
-        
+
         Storage::delete($team->logo);
 
         // $team->users()->detach();
