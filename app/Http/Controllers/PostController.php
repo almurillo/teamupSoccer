@@ -8,6 +8,7 @@ use Image;
 use Storage;
 use Purifier;
 use Gate;
+use Auth;
 use App\User;
 use Illuminate\Http\Request;
 
@@ -52,12 +53,12 @@ class PostController extends Controller
               )               # End recognized pre-linked alts.
             )                 # End negative lookahead assertion.
             [?=&+%\w.-]*        # Consume any URL (query) remainder.
-            ~ix', 
+            ~ix',
             '<p><div class="embed-responsive embed-responsive-16by9"><iframe class="embed-responsive-item" title="YouTube video player" class="youtube-player" type="text/html" src="https://www.youtube.com/embed/$1" frameborder="10" allowfullscreen></iframe></div></p>',
             $text);
     return $text;
     }
-        
+
         $this->validate($request,[
 
             'body' => 'required|min:5'
@@ -81,7 +82,7 @@ class PostController extends Controller
             $image = $request->file('FileUpload');
             $filename = time() . '.' . $image->getClientOriginalExtension();
             $location = public_path('images/teams/posts/' . $filename);
-            Image::make($image)->resize(400, 300)->save($location);
+            Image::make($image)->fit(400, 300)->orientate()->save($location);
 
             $post->image = $filename;
 
@@ -100,14 +101,20 @@ class PostController extends Controller
      * @param  \App\Post  $post
      * @return \Illuminate\Http\Response
      */
-    public function edit($team_id, $post_id)
+    public function edit($team, $post)
     {
-        
-        $post =  Post::find($post_id);
-        $team = Team::find($team_id);
-        $user = User::where('id','=',$team->user_id)->first();
 
+      $user = Auth::user();
+
+        $post = Post::find($post);
+        $team = Team::find($team);
+        // $user = User::where('id','=',$team->user_id)->first();
+
+        // dd($user);
+        if($user->id == $team->user_id || $user->can('view',$post)){
         return view('posts.edit',compact('post','team','user'));
+      }
+         return back();
 
     }
 
@@ -118,69 +125,76 @@ class PostController extends Controller
      * @param  \App\Post  $post
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $team_id, $post_id )
+    public function update(Request $request, $team, $post )
     {
-        
-    function linkifyYouTubeURLs($text) {
-        $text = preg_replace('~
-            # Match non-linked youtube URL in the wild. (Rev:20130823)
-            https?://         # Required scheme. Either http or https.
-            (?:[0-9A-Z-]+\.)? # Optional subdomain.
-            (?:               # Group host alternatives.
-              youtu\.be/      # Either youtu.be,
-            | youtube         # or youtube.com or
-              (?:-nocookie)?  # youtube-nocookie.com
-              \.com           # followed by
-              \S*             # Allow anything up to VIDEO_ID,
-              [^\w\s-]       # but char before ID is non-ID char.
-            )                 # End host alternatives.
-            ([\w-]{11})      # $1: VIDEO_ID is exactly 11 chars.
-            (?=[^\w-]|$)     # Assert next char is non-ID or EOS.
-            (?!               # Assert URL is not pre-linked.
-              [?=&+%\w.-]*    # Allow URL (query) remainder.
-              (?:             # Group pre-linked alternatives.
-                [\'"][^<>]*>  # Either inside a start tag,
-              | </a>          # or inside <a> element text contents.
-              )               # End recognized pre-linked alts.
-            )                 # End negative lookahead assertion.
-            [?=&+%\w.-]*        # Consume any URL (query) remainder.
-            ~ix', 
-            '<p><div class="embed-responsive embed-responsive-16by9"><iframe class="embed-responsive-item" title="YouTube video player" class="youtube-player" type="text/html" src="https://www.youtube.com/embed/$1" frameborder="10" allowfullscreen></iframe></div></p>',
-            $text);
-    return $text;
-    }
-        
-        $this->validate($request,[
+      $user = Auth::user();
 
-            'body' => 'required|min:5'
 
-            ]);
-
-        $post = Post::find($post_id);
-
-        $youtube = linkifyYouTubeURLs($request->body);
-
-        $post->body = Purifier::clean($youtube,'youtube');
-
-        $post->user_id = auth()->id();
-
-        $post->team_id = $team_id;
-
-        if($request->hasFile('FileUpload')){
-
-            $image = $request->file('FileUpload');
-            $filename = time() . '.' . $image->getClientOriginalExtension();
-            $location = public_path('images/teams/posts/' . $filename);
-            Image::make($image)->resize(400, 300)->save($location);
-
-            $post->image = $filename;
-
+        function linkifyYouTubeURLs($text) {
+            $text = preg_replace('~
+                # Match non-linked youtube URL in the wild. (Rev:20130823)
+                https?://         # Required scheme. Either http or https.
+                (?:[0-9A-Z-]+\.)? # Optional subdomain.
+                (?:               # Group host alternatives.
+                  youtu\.be/      # Either youtu.be,
+                | youtube         # or youtube.com or
+                  (?:-nocookie)?  # youtube-nocookie.com
+                  \.com           # followed by
+                  \S*             # Allow anything up to VIDEO_ID,
+                  [^\w\s-]       # but char before ID is non-ID char.
+                )                 # End host alternatives.
+                ([\w-]{11})      # $1: VIDEO_ID is exactly 11 chars.
+                (?=[^\w-]|$)     # Assert next char is non-ID or EOS.
+                (?!               # Assert URL is not pre-linked.
+                  [?=&+%\w.-]*    # Allow URL (query) remainder.
+                  (?:             # Group pre-linked alternatives.
+                    [\'"][^<>]*>  # Either inside a start tag,
+                  | </a>          # or inside <a> element text contents.
+                  )               # End recognized pre-linked alts.
+                )                 # End negative lookahead assertion.
+                [?=&+%\w.-]*        # Consume any URL (query) remainder.
+                ~ix',
+                '<p><div class="embed-responsive embed-responsive-16by9"><iframe class="embed-responsive-item" title="YouTube video player" class="youtube-player" type="text/html" src="https://www.youtube.com/embed/$1" frameborder="10" allowfullscreen></iframe></div></p>',
+                $text);
+        return $text;
         }
 
-        $post->save();
+            $this->validate($request,[
 
-        return redirect()->route('teams.show', $team_id)->withMessage('Your post has been updated');    
+                'body' => 'required|min:5'
 
+                ]);
+
+            $post = Post::find($post);
+            $team = Team::find($team);
+            
+            if($user->id == $team->user_id || $user->can('update',$post)){
+
+                $youtube = linkifyYouTubeURLs($request->body);
+
+                $post->body = Purifier::clean($youtube,'youtube');
+
+                // $post->user_id = auth()->id();
+
+                $post->team_id = $team->id;
+
+                if($request->hasFile('FileUpload')){
+
+                    $image = $request->file('FileUpload');
+                    $filename = time() . '.' . $image->getClientOriginalExtension();
+                    $location = public_path('images/teams/posts/' . $filename);
+                    Image::make($image)->resize(400, 300)->save($location);
+
+                    $post->image = $filename;
+
+                }
+
+            $post->save();
+
+            return redirect()->route('teams.show', $team->id)->withMessage('Your post has been updated');
+        }
+
+            return ('You are not the post creator, you cannot be here. Please go back!!');
     }
 
     /**
@@ -191,12 +205,15 @@ class PostController extends Controller
      */
     public function destroy($team_id, $post_id)
     {
-       
+      $user = Auth::user();
         $post = Post::find($post_id);
-
+        $team = Team::find($team_id);
+      if($user->id == $team->user_id || $user->can('delete',$post)){
         $post->delete();
 
-        return redirect()->route('teams.show', $team_id)->withMessage('Your post has been deleted'); 
-
+        return redirect()->route('teams.show', $team_id)->withMessage('Your post has been deleted');
+      }
+      return back();
     }
+
 }

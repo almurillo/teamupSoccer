@@ -8,6 +8,7 @@ use App\Team;
 use App\User;
 use App\Member;
 use Carbon\Carbon;
+use Auth;
 
 
 class GameController extends Controller
@@ -22,7 +23,7 @@ class GameController extends Controller
     {
 
         $team = Team::where('id',$id)->first();
-        
+
         return view('games.create', compact('team'));
 
     }
@@ -35,7 +36,7 @@ class GameController extends Controller
      */
     public function store(Request $request, $id)
     {
-        
+
         $this->validate($request,[
 
             'place' => 'required|min:5',
@@ -66,11 +67,20 @@ class GameController extends Controller
      */
     public function edit($team_id, $id)
     {
-        
+
+      $team = Team::where('id',$team_id)->first();
+
+      if(Auth::user()->id == $team->user_id){
+
         $eGame = Game::where('id', $id)->first();
 
         return view('games.edit', compact('eGame'));
 
+      } else {
+
+        return back();
+
+      }
     }
 
     /**
@@ -82,7 +92,7 @@ class GameController extends Controller
      */
     public function update(Request $request, $team_id, $id)
     {
-        
+
           $this->validate($request,[
 
             'place' => 'required|min:5',

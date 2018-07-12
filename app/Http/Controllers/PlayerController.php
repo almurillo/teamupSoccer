@@ -99,6 +99,8 @@ class PlayerController extends Controller
      */
     public function destroy($team_id,$game_id,$user_id)
     {
-      Player::where(['team_id'=>$team_id,'game_id'=>$game_id,'user_id'=>$user_id])->detach();
+      Player::where(['team_id'=>$team_id,'game_id'=>$game_id,'user_id'=>$user_id])->delete();
+      // dd($delete);
+      return back()->withErrors('You\'re not longer coming to this game!');
     }
 }

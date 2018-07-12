@@ -1,6 +1,14 @@
 <?php
 
 namespace App\Providers;
+use App\Post;
+use App\User;
+use App\Team;
+use App\Member;
+use App\Policies\PostPolicy;
+use App\Policies\TeamPolicy;
+use App\Policies\MemberPolicy;
+
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -14,6 +22,9 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         'App\Model' => 'App\Policies\ModelPolicy',
+        Post::class => PostPolicy::class,
+        Team::class => TeamPolicy::class,
+        Member::class => MemberPolicy::class,
     ];
 
     /**
@@ -25,8 +36,10 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        Gate::define('update-team', function ($user, $team) {
-        return $user->id == $team->user_id;
+        Gate::define('update-team', function ($user, $member) {
+        if($user->id == $member->user_id ){
+          return true;
+        }
     });
 
 

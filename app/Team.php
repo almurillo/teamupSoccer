@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Team extends Model
 {
-    
+
 	public function users()
 
 	{
@@ -23,5 +23,7 @@ class Team extends Model
 		return $this->hasMany(Post::class)->latest();
 
 	}
+
+
 
 }

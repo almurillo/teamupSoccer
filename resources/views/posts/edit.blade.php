@@ -8,18 +8,18 @@
 @include ('layouts.success')
 
 <div class="row">
-	
+
 <div class="col-sm-3">
-	
+
 	<img class="img-circle" src="/images/teams/{{ $team->logo }}" width="150" height="150">
 
 </div>
 
 <div class="col-sm-6">
-	
+
 		<h1>{{ $team->name }} <br>
 		<small>{{ $team->city }} , {{ $team->state_code }}</small><br>
-		<h5>Created by {{ $user->name }}</h5></h1>
+		{{-- <h5>Created by {{ $team->user_id->name }}</h5></h1> --}}
 
 </div>
 
@@ -28,15 +28,15 @@
 <hr>
 
 <div class="row">
-	
+
 	<div class="col-md-12">
-		
+
 		<form enctype="multipart/form-data" method="POST" action="{{ route('posts.update', [$team->id, $post->id]) }}">
 
 			{{ csrf_field() }}
 
 			{{ method_field('PUT')}}
-			
+
 			<div class="form-group">
 
 			<textarea onfocus="showBtnDiv()" name="body" id="body" class="form-control">{{ clean($post->body) }}</textarea>
@@ -48,7 +48,7 @@
 				<div class="col-md-6">
 
 					<div class="form-group">
-						
+
 						<button class="btn btn-success btn-block hvr-wobble-vertical">Edit Post</button>
 
 					</div>
@@ -58,7 +58,7 @@
 				<div class="col-md-6">
 
 					<div class="form-group">
-						
+
 						<button id="triggerBtn_SP" class="btn btn-default btn-block hvr-wobble-vertical" onclick="triggerUpload(event, 'fu_SP')">Upload Image</button>
 						<input type="file" style="display: none; overflow-x:hidden;" name="FileUpload" id="fu_SP" onchange="doUpload('fu_SP')"/>
 

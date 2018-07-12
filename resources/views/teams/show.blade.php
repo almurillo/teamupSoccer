@@ -49,7 +49,7 @@
 @endif
 </div>
 
-@if(@$member->admin == 1)
+{{-- @if(@$member->admin == 1) --}}
 
 <div class="col-md-3">
 
@@ -69,7 +69,7 @@
 
 </div>
 
-@endif
+{{-- @endif --}}
 
 </div>
 
@@ -103,20 +103,23 @@
 						<td>place: <small>{{ $game->place }}</small></td>
 						<td>field: {{ $game->field }}</td>
 						<td>Date/Time: <small>{{ date('m/d/Y h:i A', strtotime($game->game_time)) }}</small></td>
-						<td><a href="{{ route('players.show',$game->id) }}" class="btn btn-xs btn-success"><i class="fa fa-user"></i> Players</a></td>
+						<td><a href="{{ route('players.show',$game->id) }}" class="btn btn-xs btn-success btn-block"><i class="fa fa-user"></i> Players</a></td>
 						<td>
 							{{-- @if($count == 0) --}}
-									<form action="{{ route('player.store', [$game->team_id, $game->id]) }}" method="POST">
+									<form action="{{ route('player.store', [$game->team_id, $game->id,$game->user_id]) }}" method="POST">
 										{{ csrf_field() }}
 										<button class="btn btn-xs btn-default btn-block" type="submit" name="addPlayer" title="Join"><i class="fa fa-soccer-ball-o"></i> Join</button>
 									</form>
-							{{-- @else
-								<form action="{{ route('player.destroy', [$game->team_id, $game->id, $game->user_id]) }}" method="POST">
+						</td>
+						<td>
+							{{-- @else --}}
+								<form action="{{ route('player.destroy', [$game->team_id, $game->id, Auth::id()]) }}" method="POST">
 									{{ csrf_field() }}
+									{{ method_field('DELETE') }}
 									<button class="btn btn-xs btn-danger btn-block" type="submit" name="deletePlayer" title="Quit"><i class="fa fa-soccer-ball-o"></i> Quit</button>
 								</form>
-							@endif --}}
-
+							{{-- @endif --}}
+						</td>
 								@if(@$member->admin == 1)
 
 								<td>
@@ -134,15 +137,13 @@
 								@endif
 
 
-						</td>
-
 					</tr>
 
 				</table>
-
-			{{-- <div>
-				@foreach($players as $player)
-					{{ $player->name }}
+{{--
+			<div>
+				@foreach( $players as $player)
+					{{ $player[ $game_id ]->id }}
 				@endforeach
 			</div> --}}
 
@@ -267,29 +268,35 @@
 			<div id="status" class="status_boxes animated bounceInLeft" style="overflow-x:hidden;">
 
 					<div>
+
 						<div class="col-md-9">
 							<img src="/images/users/{{ $post->user->avatar }}" class="img-circle" width="60" height="60" border="0">
 
 							<b>Sent by <a href="#">{{ $post->user->name }}</a>&nbsp;{{ $post->created_at->diffForHumans() }}</b>
 						</div>
-						<div class="col-md-1">
 
-							<a href="{{ route('posts.edit',[$post->team_id, $post->id]) }}" class="btn btn-primary btn-sm">Edit</a>
+						@if($post->user->id === Auth::id() || $team->user_id === Auth::id() )
+								<div class="col-md-1">
 
-						</div>
+									<a href="{{ route('posts.edit',[$post->team_id, $post->id]) }}" class="btn btn-primary btn-sm">Edit</a>
 
-						<div class="col-md-1">
+								</div>
 
-							<form action="{{ route('posts.destroy', [$team->id, $post->id]) }}" method="POST">
+								<div class="col-md-1">
 
-								{{ csrf_field() }}
-								{{ method_field('DELETE') }}
+									<form action="{{ route('posts.destroy', [$team->id, $post->id]) }}" method="POST">
 
-								<button type="submit" class="btn btn-danger btn-sm">Delete</button>
+										{{ csrf_field() }}
+										{{ method_field('DELETE') }}
 
-							</form>
+										<button type="submit" class="btn btn-danger btn-sm">Delete</button>
 
-						</div>
+									</form>
+
+								</div>
+
+						@endif
+
 					<div class="row">
 						<div class="col-md-12">
 

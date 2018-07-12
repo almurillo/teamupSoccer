@@ -15,7 +15,7 @@ use Storage;
 use Gate;
 use Auth;
 use Carbon\Carbon;
-
+use Intervention\Image\ImageManager;
 
 class TeamController extends Controller
 {
@@ -91,7 +91,7 @@ class TeamController extends Controller
             $image = $request->file('team_avatar');
             $filename = time() . '.' . $image->getClientOriginalExtension();
             $location = public_path('images/teams/' . $filename);
-            Image::make($image)->resize(400, 400)->save($location);
+            Image::make($image)->resize(400, 400)->orientate()->save($location);
 
             $team->logo = $filename;
 
@@ -138,14 +138,17 @@ class TeamController extends Controller
         ->select('members.*','users.name')
         ->get();
 
-        $games = Game::where('team_id',$team->id)
-        ->whereDate('game_time','>=', Carbon::today()->toDateString())
-        ->orderBy('game_time', 'ASC')
+        $games = Game::where('games.team_id',$team->id)
+        ->whereDate('games.game_time','>=', Carbon::today()->toDateString())
+        ->orderBy('games.game_time', 'ASC')
         ->get();
 
-        // dd($member);
+        $players = Player::where(['team_id'=>$team->id])
+        ->get();
 
-        return view('teams.show', compact('team','user','member','approves','games','count'));
+        // dd($games);
+
+        return view('teams.show', compact('team','user','member','approves','games','players'));
 
     }
 
@@ -157,9 +160,9 @@ class TeamController extends Controller
      */
     public function edit(Team $team)
     {
-
-    if(Auth::user()->id == $team->user_id){
-
+    $user = Auth::user();
+    // if (Gate::allows('update-team', $team)){
+    if ($user->can('view', $team)){
         $states = DB::table('states')->get();
 
         return view('teams.edit', compact('team','states'));
@@ -182,9 +185,9 @@ class TeamController extends Controller
     public function update(Request $request, $id)
     {
 
-        $team = Team::find($id);
+      $team = Team::find($id);
         // dd($team->id);
-
+      if ($user->can('update', $team)){
         $this->validate(request(), [
 
             'name' => "required|min:2|unique:teams,name,$id",
@@ -199,7 +202,7 @@ class TeamController extends Controller
 
             ]);
 
-        $team = Team::find($id);
+        // $team = Team::find($id);
 
         $team->name = $request->name;
 
@@ -214,7 +217,7 @@ class TeamController extends Controller
             $image = $request->file('team_avatar');
             $filename = time() . '.' . $image->getClientOriginalExtension();
             $location = public_path('images/teams/' . $filename);
-            Image::make($image)->resize(400, 400)->save($location);
+            Image::make($image)->resize(400, 400)->orientate()->save($location);
 
             $oldimage = $team->logo;
 
@@ -227,6 +230,8 @@ class TeamController extends Controller
         $team->save();
 
         return redirect()->route('teams.show', $team->id)->withMessage('Your team information has been updated!');
+      }
+      return ("You are not allowed to change anything on the team!");
 
     }
 
@@ -238,7 +243,8 @@ class TeamController extends Controller
      */
     public function destroy(Team $team)
     {
-
+      $user = Auth::user();
+      if ($user->can('delete', $team)){
         Storage::delete($team->logo);
 
         // $team->users()->detach();
@@ -247,6 +253,7 @@ class TeamController extends Controller
         // Member::where('team_id', $team)->delete();
 
         return redirect('/')->withErrors('Your team has been deleted!');
-
+      }
+        return back()->withErrors("You cannot delete this team!");
     }
 }
